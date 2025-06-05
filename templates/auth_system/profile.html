@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="details">
+        <img src="{{ user.avatar.url }}" alt="Avatar" class="avatar" style="width: 150px; border-radius: 150px;">
+        <h3>{{ user.username }}</h3>
+        <p>{{ user.first_name }} {{ user.last_name }}</p>
+        <p>{{ user.email }}</p>
+
+        {% if user.about_user %}
+            <hr>
+
+            <h4>Про мене</h4>
+            <p>{{ user.about_user }}</p>
+        {% endif %}
+        
+        <a href="{% url 'logout' %}"><button type="button" class="button">Вийти</button></a>
+        <a href="{% url 'edit-profile' %}"><button type="button" class="button update">Редагувати профіль</button></a>
+        <a href="{% url 'delete-account' %}"><button type="button" class="button delete">Видалити</button></a>
+    </div>
+{% endblock %}
