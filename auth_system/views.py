@@ -32,7 +32,7 @@ def register_view(request):
                 if user:
                     login(request, user)
 
-                    return redirect("task-list")
+                    return redirect("home")
                 else:
                     messages.error(request, "Автентифікація не пройшла. Спробуйте ще раз.")
             else:
@@ -61,7 +61,7 @@ def login_view(request):
             if user:
                 login(request, user)
 
-                return redirect("task-list")
+                return redirect("home")
             else:
                 messages.warning(request=request,
                                  message="Неправильне ім'я користувача або пароль. Спробуйте ще раз.")
@@ -73,11 +73,10 @@ def login_view(request):
 
     return render(request, "auth_system/login.html", {"form": form})
         
-
 def logout_view(request):
     logout(request)
 
-    return redirect("task-list")
+    return redirect("home")
 
 def profile_view(request):
     return render(request, "auth_system/profile.html")
@@ -146,12 +145,12 @@ def delete_account_view(request):
                 logout(request)
                 user.delete()
 
-                return redirect("task-list")
+                return redirect("home")
             else:
                 messages.error(request, "Пароль невірний. Спробуйте ще раз.")
         else:
             messages.error(request, "Форма недійсна. Будь ласка, виправте помилки.")
-    else:
+    else:   
         form = forms.DeleteAccountForm()
 
     return render(request, "auth_system/profile-form.html", {"form": form})
