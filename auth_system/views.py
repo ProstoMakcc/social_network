@@ -1,6 +1,5 @@
 from django.shortcuts import render, redirect
 from . import forms
-from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
 from . import models
@@ -33,14 +32,6 @@ def register_view(request):
                     login(request, user)
 
                     return redirect("home")
-                else:
-                    messages.error(request, "Автентифікація не пройшла. Спробуйте ще раз.")
-            else:
-                messages.warning(request=request,
-                                message="Паролі не співпадають. Спробуйте ще раз.")
-        else:
-            messages.error(request=request, 
-                           message="Форма недійсна. Будь ласка, виправте помилки.")
     else:
         form = forms.RegisterForm()
 
@@ -62,12 +53,6 @@ def login_view(request):
                 login(request, user)
 
                 return redirect("home")
-            else:
-                messages.warning(request=request,
-                                 message="Неправильне ім'я користувача або пароль. Спробуйте ще раз.")
-        else:
-            messages.error(request=request, 
-                           message="Форма недійсна. Будь ласка, виправте помилки.")
     else:
         form = forms.LoginForm()
 
@@ -123,10 +108,6 @@ def edit_profile_view(request):
                 user.save()
 
                 return redirect("profile")
-            else:
-                messages.error(request, "Старий пароль невірний. Спробуйте ще раз.")
-        else:
-            messages.error(request, "Форма недійсна. Будь ласка, виправте помилки.")
     else:
         form = forms.EditProfileForm()
 
@@ -146,10 +127,6 @@ def delete_account_view(request):
                 user.delete()
 
                 return redirect("home")
-            else:
-                messages.error(request, "Пароль невірний. Спробуйте ще раз.")
-        else:
-            messages.error(request, "Форма недійсна. Будь ласка, виправте помилки.")
     else:   
         form = forms.DeleteAccountForm()
 
