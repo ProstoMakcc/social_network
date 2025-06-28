@@ -151,6 +151,42 @@ ul {
     border: 1px solid #c3e6cb;
 }
 
+.chat-list {
+    background-color: rgb(34, 33, 33);  
+    border-radius: 5px;
+    padding: 10px;
+    width: 25%;
+    height: 72svh;
+}
 
+.chat-window {
+    background-color: rgb(34, 33, 33);  
+    border-radius: 5px;
+    padding: 10px;
+    width: 100%;
+    height: 72svh;
+}
+
+.horizontal-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.chat-window > .message {
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #ffffff;
+    color: #000000;
+}
+
+.chat-plate {
+    background-color: #ffffff;
+    color: #000000;
+    padding: 30px 0px 30px 0px;
+    margin: 5px 0;
+    border-radius: 5px;
+    cursor: pointer;
+}
 
 
