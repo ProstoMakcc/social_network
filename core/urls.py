@@ -25,4 +25,5 @@ urlpatterns = [
     path('', views.homepage, name='home'),
     path('auth/', include('auth_system.urls')),
     path('messenger/', include('messenger.urls')),
+    path('posts/', include('posts.urls'))
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

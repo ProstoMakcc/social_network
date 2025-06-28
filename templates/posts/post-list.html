@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="post-container">
+        {% for post in posts %}
+            <div class="post">
+                <image src="{{ post.media.url }}" class="post-image">
+                <div class="post-text">
+                    {{ post.description }}
+                </div>
+                <div style="display: flex; flex-direction: row;">
+                    {% if request.user == post.author %}
+                        <a href="{% url 'edit-post' post.pk %}"><button type="submit" class="button edit-button">Edit</button></a>
+                        <a href="{% url 'delete-post' post.pk %}"><button type="submit" class="button delete-button">Delete</button></a>
+                    {% endif %}
+                    <button type="button" class="button" onclick="loadComments({{ post.pk }})">Comments</button>
+                </div>
+                <div id="comments-div-{{ post.pk }}">
+
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
+
+<script>
+    function loadComments(pk) {
+        const xhttp = new XMLHttpRequest();
+        xhttp.onload = function() {
+            const comments = JSON.parse(this.responseText);
+            let display_text = "";
+
+            for (let i = 0; i < Object.keys(comments).length; i += 1) {
+                displaytext += '<p>' + comments[i].content + '</p>';
+            }
+
+            divId = 'comments-div-' + pk;
+            document.getElementById(divId).innerHTML = display_text;
+        }
+
+        url = "ajax-comment-list/" + pk;
+
+        xhttp.open("GET", url, true);
+        xhttp.send();
+    }
+</script>
