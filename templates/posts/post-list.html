@@ -3,7 +3,7 @@
     <div class="post-container">
         {% for post in posts %}
             <div class="post">
-                <image src="{{ post.media.url }}" class="post-image">
+                <img src="{{ post.media.url }}" class="post-image">
                 <div class="post-text">
                     {{ post.description }}
                 </div>
@@ -12,7 +12,7 @@
                         <a href="{% url 'edit-post' post.pk %}"><button type="submit" class="button edit-button">Edit</button></a>
                         <a href="{% url 'delete-post' post.pk %}"><button type="submit" class="button delete-button">Delete</button></a>
                     {% endif %}
-                    <button type="button" class="button" onclick="loadComments({{ post.pk }})">Comments</button>
+                    <a><button type="button" class="button" onclick="loadComments('{{ post.pk }}')">Comments</button></a>
                 </div>
                 <div id="comments-div-{{ post.pk }}">
 
@@ -20,26 +20,45 @@
             </div>
         {% endfor %}
     </div>
-{% endblock %}
+    <script>
+        function loadComments(pk) {
+            const xhttp = new XMLHttpRequest();
+            xhttp.onload = function() {
+                const response = JSON.parse(this.responseText);
+                console.log(response);
+                let display_text = "";
+                create_comment_form = `
+                    <hr>
+                    <p><strong>Create own comment:</strong></p>
+                    <iframe name="dummyframe" id="dummyframe" style="display: none;"></iframe>
+                    <form method="POST" action="ajax-create-comment/${pk}/" target="dummyframe" onsubmit="setTimeout(function(){loadComments(${pk})}, 500)">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="button">Submit</button>
+                    </form>
+                `;
 
-<script>
-    function loadComments(pk) {
-        const xhttp = new XMLHttpRequest();
-        xhttp.onload = function() {
-            const comments = JSON.parse(this.responseText);
-            let display_text = "";
+                for (let i = 0; i < Object.keys(response["comments"]).length; i++) {
+                    comment = response["comments"][i]
+                    display_text += `
+                        <p><strong>${comment.author_username}</strong></p>
+                        <p>${comment.content}</p>
+                    `;
+                    if (comment.media) {
+                        display_text += `<img src="${comment.media}">`
+                    }
+                    display_text += "<br>"
+                }
 
-            for (let i = 0; i < Object.keys(comments).length; i += 1) {
-                displaytext += '<p>' + comments[i].content + '</p>';
+                display_text += create_comment_form;
+
+                divId = 'comments-div-' + pk;
+                document.getElementById(divId).innerHTML = display_text;
             }
 
-            divId = 'comments-div-' + pk;
-            document.getElementById(divId).innerHTML = display_text;
+            xhttp.open("GET", "ajax-comment-list/" + pk, false);
+            xhttp.send();
         }
+    </script>
+{% endblock %}
 
-        url = "ajax-comment-list/" + pk;
-
-        xhttp.open("GET", url, true);
-        xhttp.send();
-    }
-</script>

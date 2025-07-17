@@ -185,7 +185,7 @@ ul {
     border-radius: 5px;
     margin-bottom: 30px;
     padding: 10px 10px 10px 10px;
-    width: 37svh;
+    width: 48svh;
 }
 
 .post-text {
@@ -196,7 +196,7 @@ ul {
 }
 
 .post-image {
-    width: 36svh;
+    width: 46svh;
     
 }.chat-list {
     background-color: rgb(34, 33, 33);  

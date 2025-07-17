@@ -1,12 +1,15 @@
 from django.shortcuts import render, redirect
 from . import forms, models
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 
 def post_list_view(request):
     posts = models.Post.objects.all()
+    form = forms.CreateCommentForm
 
-    return render(request, 'posts/post-list.html', {'posts': posts})
+    return render(request, 'posts/post-list.html', {'posts': posts, 'form': form})
 
+@login_required
 def create_post_view(request):
     if request.method == 'POST':
         form = forms.CreatePostForm(request.POST, request.FILES)
@@ -77,10 +80,10 @@ def create_comment_view(request, pk):
             try: post = models.Post.objects.get(pk=pk)
             except: return redirect('post-list')
 
-            comment = models.Post.objects.create(content=content, 
-                                                 media=media, 
-                                                 author=author, 
-                                                 post=post)
+            comment = models.Comment.objects.create(content=content, 
+                                                    media=media, 
+                                                    author=author, 
+                                                    post=post)
             
             comment.save()
 
@@ -133,4 +136,15 @@ def ajax_comments_list_view(request, pk):
 
     comments = post.comments.all()
 
-    return JsonResponse(comments)
+    data = []
+    for comment in comments:
+        data.append({
+            'id': comment.id,
+            'content': comment.content,
+            'author_id': comment.author.id,
+            'author_username': comment.author.username,  
+            'media': comment.media.url if comment.media else None,
+        })
+
+    return JsonResponse({'comments': data})
+
