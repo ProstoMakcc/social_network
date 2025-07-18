@@ -31,7 +31,7 @@ def register_view(request):
                 if user:
                     login(request, user)
 
-                    return redirect("home")
+                    return redirect("lobby")
     else:
         form = forms.RegisterForm()
 
@@ -52,7 +52,7 @@ def login_view(request):
             if user:
                 login(request, user)
 
-                return redirect("home")
+                return redirect("lobby")
     else:
         form = forms.LoginForm()
 
@@ -61,7 +61,7 @@ def login_view(request):
 def logout_view(request):
     logout(request)
 
-    return redirect("home")
+    return redirect("lobby")
 
 def profile_view(request):
     return render(request, "auth_system/profile.html")
@@ -126,7 +126,7 @@ def delete_account_view(request):
                 logout(request)
                 user.delete()
 
-                return redirect("home")
+                return redirect("lobby")
     else:   
         form = forms.DeleteAccountForm()
 

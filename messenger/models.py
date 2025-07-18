@@ -1,21 +1,16 @@
 from django.db import models
-from django.conf import settings
+from auth_system.models import CustomUser
+from datetime import datetime
+
 
 class Chat(models.Model):
-    participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='chats')
+    name = models.CharField(max_length=20)
+    participants = models.ManyToManyField(CustomUser)
+    last_message = models.DateTimeField(default=datetime.today())
 
-    def __str__(self):
-        return f"Chat between {', '.join([user.username for user in self.participants.all()])}"
-    
 class Message(models.Model):
-    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
-    reciever = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_messages')
-    chat = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name='messages')
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE, null=True, related_name="messages")
+    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
     content = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Message from {self.sender} to {self.reciever} at {self.timestamp}"
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
     
-    class Meta:
-        ordering = ['-timestamp']
