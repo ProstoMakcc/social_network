@@ -8,4 +8,6 @@ urlpatterns = [
     path("profile/", views.profile_view, name="profile"),
     path("edit-profile/", views.edit_profile_view, name="edit-profile"),
     path("delete-account/", views.delete_account_view, name="delete-account"),
+    path("follow/<int:pk>/", views.follow_view, name="follow"),
+    path("profile/<int:pk>/", views.other_profile_view, name="other-profile"),
 ]

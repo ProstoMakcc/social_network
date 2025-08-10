@@ -4,8 +4,9 @@
       <div style="display: flex; flex-direction: column; width: 25svw;">
         <div class="chat-list">
           {% for chat in chats %}
-            <div class="chat-plate" onclick="selectChat({{ chat.pk }})">
-              {{ chat.name }}
+            <div class="chat-plate" onclick="selectChat('{{ chat.pk }}')">
+              <p>{{ chat.name }}</p>
+              <p id="last-message-id-{{ chat.pk }}">{{ chat.last_message.content }}</p>
             </div>    
           {% empty %}
             <center>
@@ -52,19 +53,23 @@
         eventSource.onmessage = (event) => {
           const data = JSON.parse(event.data);
 
-          messageHTML = ``;
+          let messageHTML = ``;
           
           if (data.author__username !== last_message_user) {
             if (last_message_user !== null) {
               messageHTML = `<br>`;
             }
-            messageHTML += `<div class="message-box">`;
-            messageHTML += `<strong>${data.author__username}</strong><br>`;
+            messageHTML += `
+              <div class="message-box">
+                <div class="message-author">
+                  <a href="/auth/profile/${data.author__id}"><img src="/media/${data.author__avatar}" style="border-radius: 32px; width: 32px; height: 32px;"></a>
+                  <strong>${data.author__username}</strong><br>
+                </div>
+            `;
           } else {
-            messageHTML += `<div class="message-box">`
+            messageHTML += `<div class="message-box">`;
           }
-          messageHTML += `${data.content}</div>`
-          
+          messageHTML += `<div>&nbsp;&nbsp;&nbsp;${data.content}</div></div>`
           
           last_message_user = data.author__username;
           sseData.innerHTML += messageHTML
@@ -83,6 +88,8 @@
             'X-CSRFToken': '{{ csrf_token }}',
           },
         })
+        let last_message_element = document.getElementById(`last-message-id-${pk}`);
+        last_message_element.innerHTML = `${formData.get("content")}`
       }
 
       function selectChat(pk) {
@@ -90,9 +97,9 @@
         chat_input = document.getElementById("chat-input");       
       
         showString = `
-          <form x-cloak @submit.prevent="submit">
+          <form>
             <input type="hidden" name="chat_pk" value="${pk}">
-            <div>
+            <div class="input-div">
               <textarea name="content" autofocus placeholder="Почни писати..."></textarea>
 
               <button class="button">Відправити</button>
@@ -130,7 +137,7 @@
           const response = JSON.parse(this.responseText);
           const user_suggestions = response.user_suggestions;
 
-          user_suggestion_options = "";
+          let user_suggestion_options = "";
 
           for (let i = 0; i < user_suggestions.length; i++) {
             user_suggestion_options += `<option value="${user_suggestions[i].id}">${user_suggestions[i].username}</option>`;

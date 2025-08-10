@@ -15,10 +15,22 @@
             {% endif %}
         </div>
 
-        <div class="profile-controls">
-            <a href="{% url 'logout' %}"><button type="button" class="button">Вийти</button></a>
-            <a href="{% url 'edit-profile' %}"><button type="button" class="button update">Редагувати профіль</button></a>
-            <a href="{% url 'delete-account' %}"><button type="button" class="button delete">Видалити</button></a>
-        </div>
+        {% if user == request.user %}
+            <div class="profile-controls">
+                <a href="{% url 'logout' %}"><button type="button" class="button">Вийти</button></a>
+                <a href="{% url 'edit-profile' %}"><button type="button" class="button update">Редагувати профіль</button></a>
+                <a href="{% url 'delete-account' %}"><button type="button" class="button delete">Видалити</button></a>
+            </div>
+        {% else %}
+            {% if user_followed %}
+                <div class="profile-controls">
+                    <a href="{% url 'follow' user.pk %}"><button type="button" class="button">Перестати слідкувати</button></a>
+                </div>
+            {% else %}
+                <div class="profile-controls">
+                    <a href="{% url 'follow' user.pk %}"><button type="button" class="button">Слідкувати</button></a>
+                </div>
+            {% endif %}
+        {% endif %}
     </div>
 {% endblock %}

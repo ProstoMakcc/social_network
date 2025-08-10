@@ -142,6 +142,7 @@ def ajax_comments_list_view(request, pk):
             'id': comment.id,
             'content': comment.content,
             'author_id': comment.author.id,
+            'author_avatar': comment.author.avatar.url,
             'author_username': comment.author.username,  
             'media': comment.media.url if comment.media else None,
         })

@@ -1,40 +1,4 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div class="horizontal-container">
-        <div class="chat-list">
-            {% for chat in chats %}
-                <div class="chat-plate" onclick="loadMessages({{ chat.pk }})">
-                            
-                </div>
-            {% empty %}
-                <center>
-                    <p style="margin-top: 30svh;">Спочатку створіть чат</p>
-                </center>
-            {% endfor %}
-        </div>
-        
-        <div class="chat-window" id="chat-window">
-            
-            <center>
-                <p style="margin-top: 30svh;">Спочатку виберіть співбесідника</p>
-            </center>
-        </div>
-    </div>
-
-    <script>
-        function loadMessages(pk) {
-            const xhttp = new XMLHttpRequest();
-            xhttp.onload = function() {
-                const response = JSON.parse(this.responseText);
-                showString = "";
-                for (let i = 0; i < response.messages.length; i++) {
-                    showString += "<p>" + response.messages[i].content + "</p>";
-                }
-               
-                document.getElementById("chat-window").innerHTML = showString;
-            }
-            xhttp.open("GET", "messenger/chat/" + pk, true);
-            xhttp.send();
-        }
-    </script>
+    
 {% endblock %}

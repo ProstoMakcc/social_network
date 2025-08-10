@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from . import forms
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.decorators import login_required
 from . import models
 
 
@@ -57,15 +58,18 @@ def login_view(request):
         form = forms.LoginForm()
 
     return render(request, "auth_system/login.html", {"form": form})
-        
+
+@login_required   
 def logout_view(request):
     logout(request)
 
     return redirect("lobby")
 
+@login_required
 def profile_view(request):
     return render(request, "auth_system/profile.html")
 
+@login_required
 def edit_profile_view(request):
     if request.method == "POST":
         form = forms.EditProfileForm(request.POST, request.FILES)
@@ -113,6 +117,7 @@ def edit_profile_view(request):
 
     return render(request, "auth_system/profile-form.html", {"form": form})
 
+@login_required
 def delete_account_view(request):
     if request.method == "POST":
         form = forms.DeleteAccountForm(request.POST)
@@ -131,3 +136,23 @@ def delete_account_view(request):
         form = forms.DeleteAccountForm()
 
     return render(request, "auth_system/profile-form.html", {"form": form})
+
+@login_required
+def other_profile_view(request, pk):
+    if request.method == "GET":
+        user = models.CustomUser.objects.get(pk=pk)
+        user_followed = True if request.user in user.followers.all() else False
+
+        return render(request, "auth_system/profile.html", {"user": user, "user_followed": user_followed})
+
+@login_required
+def follow_view(request, pk):
+    if request.method == "GET":
+        user = models.CustomUser.objects.get(pk=pk)
+
+        if not request.user in user.followers.all():
+            user.followers.add(request.user)
+        else:
+            user.followers.remove(request.user)
+        
+        return redirect("other-profile", pk=pk)

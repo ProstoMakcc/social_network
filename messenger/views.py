@@ -23,9 +23,17 @@ def lobby(request):
         return redirect('lobby')
     else:
         user = request.user
-        chats = models.Chat.objects.filter(participants=user).order_by('last_message') # TODO Provide last message functionality
+        chats = models.Chat.objects.filter(participants=user).order_by('last_message__created_at')
+        return_chats = []
+
+        for chat in chats:
+            return_chats.append({
+                "pk": chat.pk,
+                "name": chat.name if len(chat.participants.all()) > 2 else chat.participants.exclude(pk=request.user.pk).distinct().first(),
+                "last_message": chat.last_message,
+            })
         
-        return render(request, 'messenger/lobby.html', {'chats': chats})
+        return render(request, 'messenger/lobby.html', {'chats': return_chats})
 
 def create_message(request, pk):
     chat = models.Chat.objects.get(pk=pk)
@@ -36,7 +44,11 @@ def create_message(request, pk):
         return HttpResponse(status=403)
 
     if content:
-        models.Message.objects.create(author=user, content=content, chat=chat)
+        message = models.Message.objects.create(author=user, content=content, chat=chat)
+        message.save()
+        chat.last_message = message
+        chat.save()
+
         return HttpResponse(status=201)
     else:
         return HttpResponse(status=200)
@@ -52,7 +64,7 @@ async def stream_chat_messages(request, pk):
 
         while True:
             new_messages = models.Message.objects.filter(chat=chat).filter(id__gt=last_id).order_by('created_at').values(
-                'id', 'author__username', 'content'
+                'id', 'author__id', 'author__avatar', 'author__username', 'content'
             )
             async for message in new_messages:
                 yield f"data: {json.dumps(message)}\n\n"
@@ -61,12 +73,12 @@ async def stream_chat_messages(request, pk):
 
     async def get_existing_messages():
         messages = models.Message.objects.filter(chat=chat).order_by('created_at').values(
-            'id', 'author__username', 'content'
+            'id', 'author__id', 'author__avatar', 'author__username', 'content'
         )
         async for message in messages:
             yield f"data: {json.dumps(message)}\n\n"
 
-    async def get_last_message_id() -> int:
+    async def get_last_message_id():
         last_message = await models.Message.objects.filter(chat=chat).alast()
 
         return last_message.pk if last_message else 0

@@ -185,7 +185,7 @@ ul {
     border-radius: 5px;
     margin-bottom: 30px;
     padding: 10px 10px 10px 10px;
-    width: 48svh;
+    width: 49svh;
 }
 
 .post-text {
@@ -213,7 +213,7 @@ ul {
     border-radius: 5px;
     padding: 10px;
     width: 100%;
-    height: 55svh;
+    height: 63svh;
     overflow: auto;
 }
 
@@ -233,10 +233,20 @@ ul {
 .chat-plate {
     background-color: #ffffff;
     color: #000000;
-    padding: 10px 0px 10px 0px;
+    padding: 5px 0px 5px 0px;
     margin: 5px 0;
     border-radius: 5px;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
 }
 
+.input-div {
+    display: flex;
+    flex-direction: row;
+}
 
+.message-author {
+    display: flex; 
+    align-items: center;
+}
