@@ -12,21 +12,33 @@ class MessengerConsumers(AsyncWebsocketConsumer):
 
     def change_user_online_status(self, online_status):
         if online_status == True:
-            online_user = OnlineUser.objects.create(user=self.user)
-            online_user.save()
+            try:
+                online_user = OnlineUser.objects.get(user=self.user)
+                online_user.delete()
+            except OnlineUser.DoesNotExist:
+                pass
+            
+            OnlineUser.objects.create(user=self.user, channel_name=self.channel_name)
         else:
             user = OnlineUser.objects.filter(user=self.user)
             user.delete()
     
     def create_message(self, content, chatpk):
         message = Message.objects.create(author=self.user, content=content, chat_id=chatpk)
-        message.save()
 
         chat = Chat.objects.get(pk=chatpk)
         chat.last_message = message
         chat.save()
 
         return message
+    
+    def create_chat(self, participant_pk):
+        participant = CustomUser.objects.get(pk=participant_pk)
+        chat = Chat.objects.create(name=self.user.username)
+        chat.participants.add(participant, self.user)
+        chat.save()
+
+        return chat
     
     async def save_n_send_message(self, chatpk, content):
         message_obj = await database_sync_to_async(self.create_message)(content, chatpk)
@@ -36,6 +48,7 @@ class MessengerConsumers(AsyncWebsocketConsumer):
             'message': {
                 "new_message": {
                     "pk": message_obj.pk,
+                    'author_avatar': await database_sync_to_async(lambda: message_obj.author.avatar.url)(),
                     "author": await database_sync_to_async(lambda: message_obj.author.username)(),
                     "content": message_obj.content,
                     "chat": await database_sync_to_async(lambda: message_obj.chat.pk)(),
@@ -45,7 +58,39 @@ class MessengerConsumers(AsyncWebsocketConsumer):
         }
 
         await self.channel_layer.group_send(f'chat_{chatpk}', message)
-    
+
+    async def save_n_send_chat(self, participant_pk):
+        chat = await database_sync_to_async(self.create_chat)(participant_pk)
+        participant_channel_name = await database_sync_to_async(lambda: OnlineUser.objects.get(user_id=participant_pk).channel_name)()
+
+        group_name = f'chat_{chat.pk}'
+
+        self.chats.append(group_name)
+        await self.channel_layer.group_add(group_name, self.channel_name)
+        await self.channel_layer.group_add(group_name, participant_channel_name)
+
+        message = {
+            'type': 'chat_message',
+            'action': 'new_chat',
+            'message': {
+                'chat': {
+                    'pk': chat.pk,
+                    'name': await database_sync_to_async(lambda: chat.name if len(chat.participants.all()) > 2 else chat.participants.exclude(pk=self.user.pk).distinct().first().username)(),
+                    'last_message': (await database_sync_to_async(self.create_message)(f'Створив чат з тобою!', chat.pk)).content
+                }
+            }
+        }
+
+        join_group_message = {
+            'type': 'join_group',
+            'message': {
+                'group_name': group_name,
+            }
+        }
+        
+        await self.channel_layer.send(str(participant_channel_name), join_group_message)
+        await self.channel_layer.group_send(group_name, message)
+
     async def send_online_status(self, online_status):
         message = {
             'type': 'chat_message',
@@ -67,8 +112,8 @@ class MessengerConsumers(AsyncWebsocketConsumer):
             'action': 'typing_status',
             'message': {
                 'user': {
-                    self.user.pk,
-                    self.user.username
+                    'pk': self.user.pk,
+                    'username': self.user.username
                 },
                 'typing_status': typing_status
             }
@@ -81,6 +126,7 @@ class MessengerConsumers(AsyncWebsocketConsumer):
         async for message in messages_qs:
             messages.append({
                 'pk': message.pk,
+                'author_avatar': await database_sync_to_async(lambda: message.author.avatar.url)(),
                 'author': await database_sync_to_async(lambda: message.author.username)(),
                 'content': message.content,
                 'chat': await database_sync_to_async(lambda:  message.chat.pk)(),
@@ -119,6 +165,10 @@ class MessengerConsumers(AsyncWebsocketConsumer):
             self.chats.append(group_name)
             await self.channel_layer.group_add(group_name, self.channel_name)
 
+    async def join_group(self, event):
+        message = event['message']
+        self.chats.append(message['group_name'])
+
     async def connect(self):
         self.user = self.scope['user']
 
@@ -137,6 +187,7 @@ class MessengerConsumers(AsyncWebsocketConsumer):
         received_data = text_data_json
         action = received_data['action']
         message = received_data['message']
+        print(received_data)
 
         # if action == 'auth':
         #     if received_data['token'] != 'connection':
@@ -147,6 +198,8 @@ class MessengerConsumers(AsyncWebsocketConsumer):
 
         if action == 'user_suggestions':
             await self.send_user_suggestions(message['username'])
+        elif action == 'create_chat':
+            await self.save_n_send_chat(message['participant_pk'])
         elif action == 'get_messages':
             await self.send_messages(message['chatpk'])
         elif action == 'typing_status':
@@ -156,3 +209,4 @@ class MessengerConsumers(AsyncWebsocketConsumer):
         
     async def chat_message(self, event):
         await self.send(text_data=json.dumps(event))
+

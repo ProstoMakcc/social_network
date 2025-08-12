@@ -2,7 +2,7 @@
 {% block content %}
     <div class="horizontal-container">
         <div style="display: flex; flex-direction: column; width: 25svw;">
-            <div class="chat-list">
+            <div class="chat-list" id="chat-list">
                 {% for chat in chats %}
                     <div class="chat-plate" onclick="selectChat('{{ chat.pk }}')">
                         <p>{{ chat.name }}</p>
@@ -15,13 +15,10 @@
                 {% endfor %}
             
                 <center>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <select id="user-suggestions-dropdown" name="user-suggestions-dropdown"></select>
+                    <select id="user-suggestions-dropdown"></select>
                 
-                        <input type="text" onkeyup="showSuggestions(this.value)">
-                        <button type="submit"><a>Створити бесіду</a></button>
-                    </form>
+                    <input type="text" onkeyup="showSuggestions(this.value)">
+                    <button type="submit" onclick="createChat()">Створити бесіду</button>
                 </center>
             </div>
         </div>
@@ -62,6 +59,17 @@
                 }
 
                 document.getElementById("user-suggestions-dropdown").innerHTML = user_suggestion_options;
+            } else if (action == 'new_chat') {
+                chat = message['chat']
+
+                new_chat_plate = `
+                    <div class="chat-plate" onclick="selectChat('${chat.pk}')">
+                        <p>${chat.name}</p>
+                        <p id="last-message-id-${chat.pk}">${chat.last_message}</p>
+                    </div>  
+                `;
+                new_chat_list = new_chat_plate + document.getElementById('chat-list').innerHTML;
+                chat_list = document.getElementById('chat-list').innerHTML = new_chat_list;
             } else if (action == 'get_messages') {
                 let messages_html = ``;
                 messages = message.messages;
@@ -69,12 +77,25 @@
 
                 for (let i = 0; i < messages.length; i++) {
                     if (last_message_author == null) {
-                        messages_html += `<strong>${messages[i].author}</strong><p>${messages[i].content}`;
+                        messages_html += `
+                            <div>
+                                <img src="${messages[i].author_avatar}">
+                                <strong>${messages[i].author}</strong>
+                            </div>
+                            <p>${messages[i].content}
+                        `;
                         last_message_author = messages[i].author;
                     } else if (last_message_author == messages[i].author) {
                         messages_html += `<p>${messages[i].content}</p>`;
                     } else {
-                        messages_html += `<br><strong>${messages[i].author}</strong><p>${messages[i].content}`;
+                        messages_html += `
+                            <br>
+                            <div>
+                                <img src="${messages[i].author_avatar}">
+                                <strong>${messages[i].author}</strong>
+                            </div>
+                            <p>${messages[i].content}
+                        `;
                         last_message_author = messages[i].author;
                     }
                 } 
@@ -93,6 +114,15 @@
                 'action': 'user_suggestions',
                 'message': {
                     'username': username
+                }
+            }));
+        }
+
+        function createChat() {
+            socket.send(JSON.stringify({
+                'action': 'create_chat',
+                'message': {
+                    'participant_pk': document.getElementById('user-suggestions-dropdown').value
                 }
             }));
         }

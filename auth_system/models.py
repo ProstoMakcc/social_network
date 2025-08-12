@@ -13,6 +13,7 @@ class CustomUser(AbstractUser):
 
 class OnlineUser(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    channel_name = models.TextField(default="")
 
     def __str__(self):
         return self.user.username
