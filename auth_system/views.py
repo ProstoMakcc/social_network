@@ -32,7 +32,7 @@ def register_view(request):
                 if user:
                     login(request, user)
 
-                    return redirect("lobby")
+                    return redirect("chat")
     else:
         form = forms.RegisterForm()
 
@@ -53,7 +53,7 @@ def login_view(request):
             if user:
                 login(request, user)
 
-                return redirect("lobby")
+                return redirect("chat")
     else:
         form = forms.LoginForm()
 
@@ -63,7 +63,7 @@ def login_view(request):
 def logout_view(request):
     logout(request)
 
-    return redirect("lobby")
+    return redirect("chat")
 
 @login_required
 def profile_view(request):
@@ -131,7 +131,7 @@ def delete_account_view(request):
                 logout(request)
                 user.delete()
 
-                return redirect("lobby")
+                return redirect("chat")
     else:   
         form = forms.DeleteAccountForm()
 

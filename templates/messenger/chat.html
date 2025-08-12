@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="horizontal-container">
+        <div style="display: flex; flex-direction: column; width: 25svw;">
+            <div class="chat-list">
+                {% for chat in chats %}
+                    <div class="chat-plate" onclick="selectChat('{{ chat.pk }}')">
+                        <p>{{ chat.name }}</p>
+                        <p id="last-message-id-{{ chat.pk }}">{{ chat.last_message.content }}</p>
+                    </div>    
+                {% empty %}
+                    <center>
+                        <p style="margin-top: 30svh;">Спочатку створіть чат</p>
+                    </center>
+                {% endfor %}
+            
+                <center>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <select id="user-suggestions-dropdown" name="user-suggestions-dropdown"></select>
+                
+                        <input type="text" onkeyup="showSuggestions(this.value)">
+                        <button type="submit"><a>Створити бесіду</a></button>
+                    </form>
+                </center>
+            </div>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; width: 68svw;">
+            <div class="chat-window" id="chat-window">
+                <center>
+                    <p style="margin-top: 30svh;">Спочатку виберіть співбесідника</p>
+                </center>
+            </div>
+            <div class="chat-input" id="chat-input" hidden>
+                <input type="text" id="text-input" placeholder="Почніть писати...">
+                <button type="submit" onclick="newMessage()">Відправити</button>
+            </div>
+        </div>   
+    </div>
+    <script>
+        const socket = new WebSocket(`ws://${window.location.host}/ws/chat/`);
+        let current_chat = null;
+        let last_message_author = null;
+
+        socket.onopen = function() {
+            
+        };
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const action = data.action;
+            const message = data.message;
+            console.log(data);
+            
+            if (action == 'user_suggestions') {
+                let user_suggestion_options = "";
+                user_suggestions = message.users;
+
+                for (let i = 0; i < user_suggestions.length; i++) {
+                    user_suggestion_options += `<option value="${user_suggestions[i].pk}">${user_suggestions[i].username}</option>`;
+                }
+
+                document.getElementById("user-suggestions-dropdown").innerHTML = user_suggestion_options;
+            } else if (action == 'get_messages') {
+                let messages_html = ``;
+                messages = message.messages;
+                last_message_author = messages[messages.length]
+
+                for (let i = 0; i < messages.length; i++) {
+                    if (last_message_author == null) {
+                        messages_html += `<strong>${messages[i].author}</strong><p>${messages[i].content}`;
+                        last_message_author = messages[i].author;
+                    } else if (last_message_author == messages[i].author) {
+                        messages_html += `<p>${messages[i].content}</p>`;
+                    } else {
+                        messages_html += `<br><strong>${messages[i].author}</strong><p>${messages[i].content}`;
+                        last_message_author = messages[i].author;
+                    }
+                } 
+
+                document.getElementById("chat-window").innerHTML = messages_html;
+                document.getElementById("chat-input").hidden = false;
+            } else if (action == 'new_message') {
+                new_message = message.new_message;
+                document.getElementById(`last-message-id-${new_message.chat}`).innerHTML = new_message.content;
+                document.getElementById('chat-window').innerHTML += `<p>${new_message.content}</p>`;
+            }
+        };
+
+        function showSuggestions(username) {
+            socket.send(JSON.stringify({
+                'action': 'user_suggestions',
+                'message': {
+                    'username': username
+                }
+            }));
+        }
+
+        function selectChat(chatpk) {
+            socket.send(JSON.stringify({
+                'action': 'get_messages',
+                'message': {
+                    'chatpk': chatpk
+                }
+            }));
+            current_chat = chatpk;
+        }
+
+        function newMessage() {
+            socket.send(JSON.stringify({
+                'action': 'new_message',
+                'message': {
+                    'chatpk': current_chat,
+                    'content': document.getElementById('text-input').value
+                }
+            }));
+        }
+    </script>
+{% endblock %}
