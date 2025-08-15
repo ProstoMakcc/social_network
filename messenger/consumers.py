@@ -48,6 +48,7 @@ class MessengerConsumers(AsyncWebsocketConsumer):
             'message': {
                 "new_message": {
                     "pk": message_obj.pk,
+                    'author_pk': await database_sync_to_async(lambda: message.author.pk)(),
                     'author_avatar': await database_sync_to_async(lambda: message_obj.author.avatar.url)(),
                     "author": await database_sync_to_async(lambda: message_obj.author.username)(),
                     "content": message_obj.content,
@@ -75,6 +76,7 @@ class MessengerConsumers(AsyncWebsocketConsumer):
             'message': {
                 'chat': {
                     'pk': chat.pk,
+                    'chat_image': await database_sync_to_async(lambda: chat.chat_image.url)(),
                     'name': await database_sync_to_async(lambda: chat.name if len(chat.participants.all()) > 2 else chat.participants.exclude(pk=self.user.pk).distinct().first().username)(),
                     'last_message': (await database_sync_to_async(self.create_message)(f'Створив чат з тобою!', chat.pk)).content
                 }
@@ -106,7 +108,7 @@ class MessengerConsumers(AsyncWebsocketConsumer):
         for chat in self.chats:
             await self.channel_layer.group_send(chat, message)
 
-    async def send_typing_status(self, chat, typing_status):
+    async def send_typing_status(self, chatpk, typing_status):
         message = {
             'type': 'chat_message',
             'action': 'typing_status',
@@ -115,10 +117,11 @@ class MessengerConsumers(AsyncWebsocketConsumer):
                     'pk': self.user.pk,
                     'username': self.user.username
                 },
-                'typing_status': typing_status
+                'typing_status': typing_status,
+                'chatpk': chatpk
             }
         }
-        await self.channel_layer.group_send(chat, message)
+        await self.channel_layer.group_send(f'chat_{chatpk}', message)
 
     async def send_messages(self, chat):
         messages_qs = await database_sync_to_async(lambda: Message.objects.filter(chat=chat).order_by('created_at'))()
@@ -126,6 +129,7 @@ class MessengerConsumers(AsyncWebsocketConsumer):
         async for message in messages_qs:
             messages.append({
                 'pk': message.pk,
+                'author_pk': await database_sync_to_async(lambda: message.author.pk)(),
                 'author_avatar': await database_sync_to_async(lambda: message.author.avatar.url)(),
                 'author': await database_sync_to_async(lambda: message.author.username)(),
                 'content': message.content,
@@ -181,10 +185,10 @@ class MessengerConsumers(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         await database_sync_to_async(self.change_user_online_status)(online_status=False)
         await self.send_online_status(online_status=False)
+        
 
     async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        received_data = text_data_json
+        received_data = json.loads(text_data)
         action = received_data['action']
         message = received_data['message']
         print(received_data)

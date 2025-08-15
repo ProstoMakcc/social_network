@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.decorators import login_required
 from . import models
+from posts import models as postsModels
 
 
 def register_view(request):
@@ -67,7 +68,9 @@ def logout_view(request):
 
 @login_required
 def profile_view(request):
-    return render(request, "auth_system/profile.html")
+    posts = postsModels.Post.objects.filter(author=request.user).order_by('-created_at')
+
+    return render(request, "auth_system/profile.html", {'posts': posts})
 
 @login_required
 def edit_profile_view(request):
@@ -142,8 +145,9 @@ def other_profile_view(request, pk):
     if request.method == "GET":
         user = models.CustomUser.objects.get(pk=pk)
         user_followed = True if request.user in user.followers.all() else False
+        posts = postsModels.Post.objects.filter(author=user).order_by('-created_at')
 
-        return render(request, "auth_system/profile.html", {"user": user, "user_followed": user_followed})
+        return render(request, "auth_system/profile.html", {"user": user, "user_followed": user_followed, "posts": posts})
 
 @login_required
 def follow_view(request, pk):

@@ -5,26 +5,18 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def chat(request):
-    if request.method == 'POST':
-        user_id = request.POST["user-suggestions-dropdown"]
-        user = authModels.CustomUser.objects.get(id=user_id)
-        chat = models.Chat.objects.filter(participants=request.user).filter(participants=user).distinct().first()
-        if not chat:
-            chat = models.Chat.objects.create(name=f"{user.username}")
-            chat.participants.add(user)
-            chat.participants.add(request.user)
-            chat.save()
+    chats_qr = models.Chat.objects.filter(participants=request.user).order_by("-last_message__created_at")
+    chats = []
 
-        return redirect('chat')
-    else:
-        chats_qr = models.Chat.objects.filter(participants=request.user).order_by("-last_message__created_at")
-        chats = []
+    for chat in chats_qr:
+        if len(chat.last_message.content) > 10:
+            chat.last_message.content = chat.last_message.content[0:10] + "..."
 
-        for chat in chats_qr:
-            chats.append({
-                'pk': chat.pk,
-                'name': chat.name if len(chat.participants.all()) > 2 else chat.participants.exclude(pk=request.user.pk).distinct().first().username,
-                'last_message': chat.last_message
-            })
+        chats.append({
+            'pk': chat.pk,
+            'chat_image': chat.chat_image,
+            'name': chat.name if len(chat.participants.all()) > 2 else chat.participants.exclude(pk=request.user.pk).distinct().first().username,
+            'last_message': chat.last_message
+        })
         
-        return render(request, 'messenger/chat.html', {'chats': chats})
+    return render(request, 'messenger/chat.html', {'chats': chats})

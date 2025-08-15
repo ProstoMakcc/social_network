@@ -8,6 +8,5 @@ urlpatterns = [
     path('delete-post/<int:pk>/', views.delete_post_view, name='delete-post'),
     path('edit-comment/<int:pk>/', views.edit_comment_form, name='edit-comment'),
     path('delete-comment/<int:pk>/', views.delete_comment_view, name='delete-comment'),
-    path('create-comment/<int:pk>/', views.create_comment_view, name='create-comment'),
     path('ajax-comment-list/<int:pk>/', views.ajax_comments_list_view, name='ajax-get-comments')
 ] 

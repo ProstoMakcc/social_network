@@ -1,150 +1,53 @@
-{% extends 'base.html' %}
-{% block content %}
-    <div class="horizontal-container">
-        <div style="display: flex; flex-direction: column; width: 25svw;">
-            <div class="chat-list" id="chat-list">
-                {% for chat in chats %}
-                    <div class="chat-plate" onclick="selectChat('{{ chat.pk }}')">
-                        <p>{{ chat.name }}</p>
-                        <p id="last-message-id-{{ chat.pk }}">{{ chat.last_message.content }}</p>
-                    </div>    
-                {% empty %}
-                    <center>
-                        <p style="margin-top: 30svh;">Спочатку створіть чат</p>
-                    </center>
-                {% endfor %}
-            
-                <center>
-                    <select id="user-suggestions-dropdown"></select>
-                
-                    <input type="text" onkeyup="showSuggestions(this.value)">
-                    <button type="submit" onclick="createChat()">Створити бесіду</button>
-                </center>
-            </div>
+{% extends 'base.html' %} {% load static %} {% block content %}
+<div class="horizontal-container">
+  <div style="display: flex; flex-direction: column; width: 25svw">
+    <div class="chat-list" id="chat-list">
+      {% for chat in chats %}
+      <div class="chat-plate" onclick="selectChat('{{ chat.pk }}')">
+        <div class="zero-offset">
+            <img class="chat-profile-image" src="/media/{{ chat.chat_image }}">
         </div>
-        
-        <div style="display: flex; flex-direction: column; width: 68svw;">
-            <div class="chat-window" id="chat-window">
-                <center>
-                    <p style="margin-top: 30svh;">Спочатку виберіть співбесідника</p>
-                </center>
-            </div>
-            <div class="chat-input" id="chat-input" hidden>
-                <input type="text" id="text-input" placeholder="Почніть писати...">
-                <button type="submit" onclick="newMessage()">Відправити</button>
-            </div>
-        </div>   
+        <div class="chat-info-div zero-offset">
+          <p>{{ chat.name }}</p>
+          <p id="last-message-id-{{ chat.pk }}">
+            {{ chat.last_message.content }}
+          </p>
+        </div>
+      </div>
+      {% empty %}
+      <center>
+        <p style="margin-top: 30svh">Спочатку створіть чат</p>
+      </center>
+      {% endfor %}
+
+      <center>
+        <select id="user-suggestions-dropdown"></select>
+
+        <input type="text" onkeyup="showSuggestions(this.value)" />
+        <button type="submit" onclick="createChat()">Створити бесіду</button>
+      </center>
     </div>
-    <script>
-        const socket = new WebSocket(`ws://${window.location.host}/ws/chat/`);
-        let current_chat = null;
-        let last_message_author = null;
+  </div>
 
-        socket.onopen = function() {
-            
-        };
-
-        socket.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            const action = data.action;
-            const message = data.message;
-            console.log(data);
-            
-            if (action == 'user_suggestions') {
-                let user_suggestion_options = "";
-                user_suggestions = message.users;
-
-                for (let i = 0; i < user_suggestions.length; i++) {
-                    user_suggestion_options += `<option value="${user_suggestions[i].pk}">${user_suggestions[i].username}</option>`;
-                }
-
-                document.getElementById("user-suggestions-dropdown").innerHTML = user_suggestion_options;
-            } else if (action == 'new_chat') {
-                chat = message['chat']
-
-                new_chat_plate = `
-                    <div class="chat-plate" onclick="selectChat('${chat.pk}')">
-                        <p>${chat.name}</p>
-                        <p id="last-message-id-${chat.pk}">${chat.last_message}</p>
-                    </div>  
-                `;
-                new_chat_list = new_chat_plate + document.getElementById('chat-list').innerHTML;
-                chat_list = document.getElementById('chat-list').innerHTML = new_chat_list;
-            } else if (action == 'get_messages') {
-                let messages_html = ``;
-                messages = message.messages;
-                last_message_author = messages[messages.length]
-
-                for (let i = 0; i < messages.length; i++) {
-                    if (last_message_author == null) {
-                        messages_html += `
-                            <div>
-                                <img src="${messages[i].author_avatar}">
-                                <strong>${messages[i].author}</strong>
-                            </div>
-                            <p>${messages[i].content}
-                        `;
-                        last_message_author = messages[i].author;
-                    } else if (last_message_author == messages[i].author) {
-                        messages_html += `<p>${messages[i].content}</p>`;
-                    } else {
-                        messages_html += `
-                            <br>
-                            <div>
-                                <img src="${messages[i].author_avatar}">
-                                <strong>${messages[i].author}</strong>
-                            </div>
-                            <p>${messages[i].content}
-                        `;
-                        last_message_author = messages[i].author;
-                    }
-                } 
-
-                document.getElementById("chat-window").innerHTML = messages_html;
-                document.getElementById("chat-input").hidden = false;
-            } else if (action == 'new_message') {
-                new_message = message.new_message;
-                document.getElementById(`last-message-id-${new_message.chat}`).innerHTML = new_message.content;
-                document.getElementById('chat-window').innerHTML += `<p>${new_message.content}</p>`;
-            }
-        };
-
-        function showSuggestions(username) {
-            socket.send(JSON.stringify({
-                'action': 'user_suggestions',
-                'message': {
-                    'username': username
-                }
-            }));
-        }
-
-        function createChat() {
-            socket.send(JSON.stringify({
-                'action': 'create_chat',
-                'message': {
-                    'participant_pk': document.getElementById('user-suggestions-dropdown').value
-                }
-            }));
-        }
-
-        function selectChat(chatpk) {
-            socket.send(JSON.stringify({
-                'action': 'get_messages',
-                'message': {
-                    'chatpk': chatpk
-                }
-            }));
-            current_chat = chatpk;
-        }
-
-        function newMessage() {
-            socket.send(JSON.stringify({
-                'action': 'new_message',
-                'message': {
-                    'chatpk': current_chat,
-                    'content': document.getElementById('text-input').value
-                }
-            }));
-        }
-    </script>
+  <div style="display: flex; flex-direction: column; width: 68svw">
+    <div class="chat-window" id="chat-window">
+      <center>
+        <p style="margin-top: 30svh">Спочатку виберіть співбесідника</p>
+      </center>
+    </div>
+    <div style="display: flex; flex-direction: row">
+      <div class="chat-input" id="chat-input" hidden>
+        <input
+          type="text"
+          id="text-input"
+          placeholder="Почніть писати..."
+          onkeypress="sendTypingStatus(true); setTimer();"
+        />
+        <button type="submit" onclick="newMessage()">Відправити</button>
+      </div>
+      <div style="color: black" id="currently-typing-list" hidden></div>
+    </div>
+  </div>
+</div>
+<script src="{% static 'js/chat.js' %}"></script>
 {% endblock %}

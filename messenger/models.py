@@ -4,6 +4,7 @@ from auth_system.models import CustomUser
 
 class Chat(models.Model):
     name = models.CharField(max_length=20)
+    chat_image = models.ImageField(upload_to='chat_image', default='chat_image_default.png')
     participants = models.ManyToManyField(CustomUser)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     last_message = models.ForeignKey('Message', on_delete=models.SET_NULL, null=True, blank=True, related_name='last_in_chats')

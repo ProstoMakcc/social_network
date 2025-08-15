@@ -6,12 +6,14 @@
             <h3>{{ user.username }}</h3>
             <p>{{ user.first_name }} {{ user.last_name }}</p>
             <p>{{ user.email }}</p>
+        </div>
 
-            {% if user.about_user %}
+        <div style="display: flex; flex-direction: column;">
+            {% if user.bio %}
                 <hr>
 
                 <h4>Про мене</h4>
-                <p>{{ user.about_user }}</p>
+                <p>{{ user.bio }}</p>
             {% endif %}
         </div>
 
@@ -20,17 +22,30 @@
                 <a href="{% url 'logout' %}"><button type="button" class="button">Вийти</button></a>
                 <a href="{% url 'edit-profile' %}"><button type="button" class="button update">Редагувати профіль</button></a>
                 <a href="{% url 'delete-account' %}"><button type="button" class="button delete">Видалити</button></a>
+                <a href="{% url 'chat' %}"><button type="button" class="button">Назад</button></a>
             </div>
         {% else %}
             {% if user_followed %}
                 <div class="profile-controls">
                     <a href="{% url 'follow' user.pk %}"><button type="button" class="button">Перестати слідкувати</button></a>
+                    <a href="{% url 'chat' %}"><button type="button" class="button">Назад</button></a>
                 </div>
             {% else %}
                 <div class="profile-controls">
                     <a href="{% url 'follow' user.pk %}"><button type="button" class="button">Слідкувати</button></a>
+                    <a href="{% url 'chat' %}"><button type="button" class="button">Назад</button></a>
                 </div>
             {% endif %}
         {% endif %}
+    </div>
+    <div class="profile-posts">
+        {% for post in posts %}
+            <p>{{ post.media.url }}</p>
+            <p>{{ post.content }}</p>
+        {% empty %}
+            <center>
+                <h3>У користувача немає жодних постів</h3>
+            </center>
+        {% endfor %}
     </div>
 {% endblock %}

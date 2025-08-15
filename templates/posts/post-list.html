@@ -1,9 +1,14 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
     <div class="post-container">
         {% for post in posts %}
             <div class="post">
                 <div>
+                    <div class="message-author">
+                        <a class="zero-offset" href="{% url 'other-profile' post.author.pk %}"><img class="chat-profile-image zero-offset" src="{{ post.author.avatar.url }}"></a>
+                        <p>{{ post.author.username }}</p>
+                    </div>
                     <img src="{{ post.media.url }}" class="post-image">
                     <div class="post-text">
                         {{ post.description }}
@@ -24,71 +29,6 @@
             </div>
         {% endfor %}
     </div>
-    <script>
-        let accessed_comments = null;
-
-        function loadComments(pk) {
-            if (accessed_comments == null) {
-                const xhttp = new XMLHttpRequest();
-                xhttp.onload = function() {
-                    const response = JSON.parse(this.responseText);
-                    console.log(response);
-                    let display_text = "<hr>";
-
-                    for (let i = 0; i < Object.keys(response["comments"]).length; i++) {
-                        comment = response["comments"][i]
-                        display_text += `
-                            <div style="display: flex; flex-direction: row; align-items: center;">
-                                <img src="${comment.author_avatar}" style="border-radius: 32px; width: 32px; height: 32px;">
-                                <p>${comment.author_username}</p>
-                            </div>
-                            <div>
-                                <p>${comment.content}</p>
-                            </div>
-                        `;
-                        if (comment.media) {
-                            display_text += `<img src="${comment.media}">`
-                        }
-                        display_text += "<br>"
-                    }
-
-                    display_text += `
-                        <hr>
-                        <p><strong>Create own comment:</strong></p>
-                        
-                        <form id="create-comment-form" method="POST" action="ajax-create-comment/${pk}/">
-                            {% csrf_token %}
-                            {{ form.as_p }}
-                             
-                            <button type="submit" class="button">Submit</button>
-                        </form>
-                    `;
-
-                    divId = 'comments-div-' + pk;
-                    document.getElementById(divId).innerHTML = display_text;
-
-                    //var form = document.getElementById("create-comment-form");
-                    //function handleForm(event) { event.preventDefault(); } 
-                    //form.addEventListener('submit', handleForm);
-
-                    accessed_comments = pk;
-                }
-
-                xhttp.open("GET", "ajax-comment-list/" + pk, false);
-                xhttp.send();
-            } else {
-                if (accessed_comments == pk) {
-                    divId = 'comments-div-' + pk;
-                    document.getElementById(divId).innerHTML = "";
-                    accessed_comments = null;
-                } else {
-                    divId = 'comments-div-' + accessed_comments;
-                    document.getElementById(divId).innerHTML = "";
-                    accessed_comments = null;
-                    loadComments(pk);
-                }
-            }   
-        }
-    </script>
+    <script src="{% static 'js/post_list.js' %}"></script>
 {% endblock %}
 

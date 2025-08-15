@@ -23,6 +23,7 @@ a {
     border: 1px solid rgb(34, 33, 33);
     border-radius: 5px;
     margin-bottom: 30px;
+    box-shadow: 2px 2px 2px 2px rgb(20, 20, 20);
 }
 
 .searchbar {
@@ -186,6 +187,7 @@ ul {
     margin-bottom: 30px;
     padding: 10px 10px 10px 10px;
     width: 49svh;
+    box-shadow: 2px 2px 2px 2px rgb(20, 20, 20);
 }
 
 .post-text {
@@ -206,6 +208,7 @@ ul {
     padding: 10px;
     width: 90%;
     height: 72svh;
+    box-shadow: 2px 2px 2px 2px rgb(20, 20, 20);
 }
 
 .chat-window {
@@ -215,6 +218,7 @@ ul {
     width: 100%;
     height: 63svh;
     overflow: auto;
+    box-shadow: 2px 2px 2px 2px rgb(20, 20, 20);
 }
 
 .horizontal-container {
@@ -233,10 +237,16 @@ ul {
 .chat-plate {
     background-color: #ffffff;
     color: #000000;
-    padding: 5px 0px 5px 0px;
+    padding: 5px;
     margin: 5px 0;
     border-radius: 5px;
     cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    box-shadow: 1px 1px 1px 1px #818181;
+}
+
+.chat-info-div {
     display: flex;
     flex-direction: column;
 }
@@ -249,4 +259,15 @@ ul {
 .message-author {
     display: flex; 
     align-items: center;
+}
+
+.chat-profile-image {
+    width: 38px;
+    height: 38px;
+    border-radius: 38px;
+}
+
+.zero-offset {
+    margin: 0px;
+    padding: 0px;
 }

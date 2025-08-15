@@ -5,9 +5,8 @@ from django.contrib.auth.decorators import login_required
 
 def post_list_view(request):
     posts = models.Post.objects.all()
-    form = forms.CreateCommentForm
 
-    return render(request, 'posts/post-list.html', {'posts': posts, 'form': form})
+    return render(request, 'posts/post-list.html', {'posts': posts})
 
 @login_required
 def create_post_view(request):
@@ -67,31 +66,6 @@ def delete_post_view(request, pk):
         return redirect('post-list')
     else:
         return render(request, 'posts/delete-post-form.html')
-    
-
-def create_comment_view(request, pk):
-    if request.method == 'POST':
-        form = forms.CreateCommentForm(request.POST, request.FILES)
-
-        if form.is_valid():
-            content = form.cleaned_data['content']
-            media = form.cleaned_data['media']
-            author = request.user
-            try: post = models.Post.objects.get(pk=pk)
-            except: return redirect('post-list')
-
-            comment = models.Comment.objects.create(content=content, 
-                                                    media=media, 
-                                                    author=author, 
-                                                    post=post)
-            
-            comment.save()
-
-            return redirect('post-list')
-    else:
-        form = forms.CreateCommentForm()
-
-    return render(request, 'posts/create-form.html', {'form': form})
 
 def edit_comment_form(request, pk):
     try: comment = models.Comment.objects.get(pk=pk)
